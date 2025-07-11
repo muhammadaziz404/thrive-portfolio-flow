@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 
 interface Particle {
   x: number;
@@ -9,6 +9,7 @@ interface Particle {
   life: number;
   maxLife: number;
   size: number;
+  hue: number;
 }
 
 interface ParticleSystemProps {
@@ -20,95 +21,107 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const lastTime = useRef(0);
+
+  // Throttled mouse movement detection
+  const hasMouseMoved = useCallback(() => {
+    const dx = mousePosition.x - lastMousePos.current.x;
+    const dy = mousePosition.y - lastMousePos.current.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 8) { // Increased threshold to reduce particle spam
+      lastMousePos.current = { x: mousePosition.x, y: mousePosition.y };
+      return true;
+    }
+    return false;
+  }, [mousePosition]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { 
+      alpha: true,
+      desynchronized: true // Better performance for animations
+    });
     if (!ctx) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Limit DPR for performance
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.scale(dpr, dpr);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
     const createParticle = (x: number, y: number): Particle => ({
-      x,
-      y,
-      vx: (Math.random() - 0.5) * 1.5,
-      vy: (Math.random() - 0.5) * 1.5,
+      x: x + (Math.random() - 0.5) * 20,
+      y: y + (Math.random() - 0.5) * 20,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: (Math.random() - 0.5) * 1.2,
       life: 0,
-      maxLife: 40 + Math.random() * 30, // Shorter life for better performance
-      size: Math.random() * 2 + 1,
+      maxLife: 30 + Math.random() * 20, // Shorter life for better performance
+      size: Math.random() * 1.5 + 0.5,
+      hue: 280 + Math.random() * 40,
     });
 
-    const updateParticles = () => {
-      // Only add particles if mouse moved significantly
-      const dx = mousePosition.x - lastMousePos.current.x;
-      const dy = mousePosition.y - lastMousePos.current.y;
-      const mouseMoved = Math.sqrt(dx * dx + dy * dy) > 5;
+    const animate = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime.current;
+      
+      // Limit frame rate to 60fps max for smoother performance
+      if (deltaTime < 16.67) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      
+      lastTime.current = currentTime;
 
-      if (mouseMoved && Math.random() < 0.2) { // Reduced particle spawn rate
-        particlesRef.current.push(
-          createParticle(
-            mousePosition.x + (Math.random() - 0.5) * 30,
-            mousePosition.y + (Math.random() - 0.5) * 30
-          )
-        );
-        lastMousePos.current = { x: mousePosition.x, y: mousePosition.y };
+      // Add particles only if mouse moved and not too many exist
+      if (hasMouseMoved() && particlesRef.current.length < 40 && Math.random() < 0.3) {
+        particlesRef.current.push(createParticle(mousePosition.x, mousePosition.y));
       }
 
-      // Update existing particles
+      // Update particles with optimized calculations
       particlesRef.current = particlesRef.current.filter((particle) => {
         particle.x += particle.vx;
         particle.y += particle.vy;
         particle.life++;
-        particle.vy += 0.03; // Reduced gravity
-        particle.vx *= 0.98; // Reduced friction
-
+        particle.vy += 0.02; // Reduced gravity
+        particle.vx *= 0.99; // Reduced friction
         return particle.life < particle.maxLife;
       });
 
-      // Limit particle count for performance
-      if (particlesRef.current.length > 60) {
-        particlesRef.current = particlesRef.current.slice(-60);
-      }
-    };
+      // Clear canvas efficiently
+      ctx.clearRect(0, 0, canvas.width / (Math.min(window.devicePixelRatio || 1, 2)), canvas.height / (Math.min(window.devicePixelRatio || 1, 2)));
 
-    const drawParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+      // Draw particles with optimized rendering
       particlesRef.current.forEach((particle) => {
         const alpha = Math.max(0, 1 - particle.life / particle.maxLife);
-        const hue = 280 + Math.sin(particle.life * 0.1) * 40;
+        const gradient = ctx.createRadialGradient(
+          particle.x, particle.y, 0,
+          particle.x, particle.y, particle.size * 2
+        );
+        
+        gradient.addColorStop(0, `hsla(${particle.hue}, 70%, 60%, ${alpha * 0.8})`);
+        gradient.addColorStop(1, `hsla(${particle.hue}, 70%, 60%, 0)`);
         
         ctx.save();
-        ctx.globalAlpha = alpha * 0.8; // Reduced opacity for subtlety
-        ctx.fillStyle = `hsla(${hue}, 70%, 60%, ${alpha})`;
+        ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Reduced glow effect for performance
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `hsla(${hue}, 70%, 60%, ${alpha * 0.5})`;
-        ctx.fill();
-        
         ctx.restore();
       });
-    };
 
-    const animate = () => {
-      updateParticles();
-      drawParticles();
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
@@ -116,13 +129,17 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [mousePosition]);
+  }, [mousePosition, hasMouseMoved]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-10 hidden md:block"
-      style={{ mixBlendMode: 'screen' }}
+      style={{ 
+        mixBlendMode: 'screen',
+        willChange: 'auto', // Remove will-change when not actively animating
+        transform: 'translate3d(0, 0, 0)', // Force GPU layer
+      }}
     />
   );
 };

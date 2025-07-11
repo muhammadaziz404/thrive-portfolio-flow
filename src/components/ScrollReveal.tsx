@@ -24,35 +24,44 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay);
+        if (entry.isIntersecting && !isVisible) {
+          // Use RAF to prevent layout thrashing
+          requestAnimationFrame(() => {
+            setTimeout(() => setIsVisible(true), delay);
+          });
         }
       },
       {
         threshold: 0.1,
-        rootMargin: '50px 0px -100px 0px',
+        rootMargin: '50px 0px -50px 0px', // Reduced margin to prevent premature triggering
       }
     );
 
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
+    const currentElement = elementRef.current;
+    if (currentElement) {
+      observer.observe(currentElement);
     }
 
-    return () => observer.disconnect();
-  }, [delay]);
+    return () => {
+      if (currentElement) {
+        observer.unobserve(currentElement);
+      }
+      observer.disconnect();
+    };
+  }, [delay, isVisible]);
 
   const getInitialTransform = () => {
     switch (direction) {
       case 'up':
-        return `translateY(${distance}px)`;
+        return `translate3d(0, ${distance}px, 0)`;
       case 'down':
-        return `translateY(-${distance}px)`;
+        return `translate3d(0, -${distance}px, 0)`;
       case 'left':
-        return `translateX(${distance}px)`;
+        return `translate3d(${distance}px, 0, 0)`;
       case 'right':
-        return `translateX(-${distance}px)`;
+        return `translate3d(-${distance}px, 0, 0)`;
       default:
-        return `translateY(${distance}px)`;
+        return `translate3d(0, ${distance}px, 0)`;
     }
   };
 
@@ -64,7 +73,9 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translate3d(0, 0, 0)' : getInitialTransform(),
         transitionDuration: `${duration}ms`,
-        willChange: 'transform, opacity',
+        willChange: isVisible ? 'auto' : 'transform, opacity', // Remove will-change after animation
+        backfaceVisibility: 'hidden', // Prevent flickering
+        perspective: '1000px', // Hardware acceleration
       }}
     >
       {children}
