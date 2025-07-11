@@ -113,7 +113,7 @@
     @apply transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/30;
   }
 
-  /* Animation delay utilities */
+  /* Enhanced Animation delay utilities */
   .animation-delay-500 {
     animation-delay: 500ms;
   }
@@ -134,20 +134,21 @@
     animation-delay: 4000ms;
   }
 
-  /* Prevent animation-induced layout shifts */
+  /* Enhanced animation performance */
   .animate-fade-in,
   .animate-slide-in-left,
   .animate-slide-in-right,
+  .animate-slide-in-down,
   .animate-scale-in {
     will-change: transform, opacity;
   }
 
-  /* Smooth transforms */
+  /* Enhanced transforms */
   .animate-blob {
     will-change: transform;
   }
 
-  /* Optimized animations */
+  /* New enhanced animations */
   .animate-spin-slow {
     animation: spin 20s linear infinite;
     will-change: transform;
@@ -156,6 +157,42 @@
   .animate-slide-across {
     animation: slide-across 2s ease-in-out infinite;
     will-change: transform;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+    will-change: box-shadow;
+  }
+
+  .animate-bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .animate-wiggle {
+    animation: wiggle 1s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .animate-text-flicker {
+    animation: text-flicker 3s ease-in-out infinite alternate;
+    will-change: opacity;
+  }
+
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 4s ease infinite;
+    will-change: background-position;
+  }
+
+  .animate-slide-in-down {
+    animation: slide-in-down 0.6s ease-out;
+    will-change: transform, opacity;
   }
 
   /* Ensure consistent spacing */
@@ -179,7 +216,18 @@
   }
 }
 
-/* Optimized blob animation */
+@keyframes slide-in-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced blob animation */
 @keyframes blob {
   0% {
     transform: translate(0px, 0px) scale(1) rotate(0deg);
@@ -195,7 +243,85 @@
   }
 }
 
-/* Reduce motion for accessibility */
+/* Enhanced float animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-20px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+}
+
+/* Enhanced pulse glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(147, 51, 234, 0.8), 0 0 60px rgba(236, 72, 153, 0.4);
+  }
+}
+
+/* Enhanced bounce animation */
+@keyframes bounce-gentle {
+  0%, 100% {
+    transform: translateY(0px);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-10px);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* Enhanced wiggle animation */
+@keyframes wiggle {
+  0%, 100% { 
+    transform: rotate(-3deg); 
+  }
+  50% { 
+    transform: rotate(3deg); 
+  }
+}
+
+/* Enhanced text flicker animation */
+@keyframes text-flicker {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.7; 
+  }
+}
+
+/* Enhanced gradient shift animation */
+@keyframes gradient-shift {
+  0% { 
+    background-position: 0% 50%; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+  }
+  100% { 
+    background-position: 0% 50%; 
+  }
+}
+
+/* Enhanced matrix rain animation */
+@keyframes matrix-rain {
+  0% { 
+    transform: translateY(-100vh); 
+  }
+  100% { 
+    transform: translateY(100vh); 
+  }
+}
+
+/* Enhanced reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -208,19 +334,44 @@
   
   .animate-blob,
   .animate-spin-slow,
-  .animate-slide-across {
+  .animate-slide-across,
+  .animate-float,
+  .animate-pulse-glow,
+  .animate-bounce-gentle,
+  .animate-wiggle,
+  .animate-text-flicker,
+  .animate-gradient-shift {
     animation: none !important;
   }
 }
 
-/* Mobile optimizations */
+/* Enhanced mobile optimizations */
 @media (max-width: 768px) {
   .glass-effect {
     @apply backdrop-blur-sm bg-black/30;
   }
   
-  /* Reduce particle effects on mobile */
+  /* Reduce intensive animations on mobile for better performance */
   .animate-blob {
     animation-duration: 30s;
+  }
+  
+  .animate-float {
+    animation-duration: 8s;
+  }
+  
+  .animate-pulse-glow {
+    animation: none;
+  }
+}
+
+/* Enhanced performance optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .hover-glow {
+    box-shadow: none;
+  }
+  
+  .animate-pulse-glow {
+    animation: none;
   }
 }

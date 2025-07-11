@@ -128,6 +128,16 @@ export default {
 						transform: 'translateX(0)'
 					}
 				},
+				'slide-in-down': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(-30px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
 				'scale-in': {
 					'0%': {
 						opacity: '0',
@@ -217,6 +227,7 @@ export default {
 				'fade-in': 'fade-in 0.8s ease-out',
 				'slide-in-left': 'slide-in-left 0.8s ease-out',
 				'slide-in-right': 'slide-in-right 0.8s ease-out',
+				'slide-in-down': 'slide-in-down 0.6s ease-out',
 				'scale-in': 'scale-in 0.8s ease-out',
 				'float': 'float 8s ease-in-out infinite',
 				'blob': 'blob 12s infinite',
