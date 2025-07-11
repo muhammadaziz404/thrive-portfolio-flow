@@ -23,10 +23,10 @@ export const AnimatedSkillBar: React.FC<AnimatedSkillBarProps> = ({ skill, index
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          // Animate the skill level
+          // Animate the skill level with smoother timing
           setTimeout(() => {
             let current = 0;
-            const increment = skill.level / 60; // 60 frames for 1 second at 60fps
+            const increment = skill.level / 50; // Smoother animation
             const timer = setInterval(() => {
               current += increment;
               if (current >= skill.level) {
@@ -35,11 +35,11 @@ export const AnimatedSkillBar: React.FC<AnimatedSkillBarProps> = ({ skill, index
               } else {
                 setAnimatedLevel(Math.floor(current));
               }
-            }, 16); // ~60fps
-          }, index * 200); // Stagger animation
+            }, 20); // Smoother frame rate
+          }, index * 150); // Reduced stagger for smoother sequence
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3, rootMargin: '20px' }
     );
 
     if (skillRef.current) {
@@ -53,25 +53,25 @@ export const AnimatedSkillBar: React.FC<AnimatedSkillBarProps> = ({ skill, index
     <div
       ref={skillRef}
       className={`group transition-all duration-700 ${
-        isVisible ? 'animate-fade-in translate-x-0' : 'opacity-0 translate-x-[-50px]'
+        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[-30px]'
       }`}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-lg bg-gradient-to-r ${skill.color} group-hover:scale-110 transition-transform duration-300`}>
-            <skill.icon className="h-5 w-5 text-white" />
+      <div className="flex items-center justify-between mb-2 md:mb-3">
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <div className={`p-1.5 md:p-2 rounded-lg bg-gradient-to-r ${skill.color} group-hover:scale-110 transition-transform duration-300`}>
+            <skill.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
           </div>
-          <span className="font-medium text-lg group-hover:text-purple-400 transition-colors">
+          <span className="font-medium text-sm md:text-lg group-hover:text-purple-400 transition-colors">
             {skill.name}
           </span>
         </div>
-        <span className="text-lg font-bold text-purple-400 tabular-nums">
+        <span className="text-sm md:text-lg font-bold text-purple-400 tabular-nums min-w-[3rem] text-right">
           {animatedLevel}%
         </span>
       </div>
       
-      <div className="relative h-3 bg-muted/30 rounded-full overflow-hidden group-hover:shadow-lg group-hover:shadow-purple-500/20 transition-all duration-300">
+      <div className="relative h-2 md:h-3 bg-muted/30 rounded-full overflow-hidden group-hover:shadow-lg group-hover:shadow-purple-500/20 transition-all duration-300">
         <div
           className={`absolute top-0 left-0 h-full bg-gradient-to-r ${skill.color} rounded-full transition-all duration-1000 ease-out`}
           style={{ width: `${animatedLevel}%` }}
@@ -81,11 +81,10 @@ export const AnimatedSkillBar: React.FC<AnimatedSkillBarProps> = ({ skill, index
         
         {/* Animated shine effect */}
         <div
-          className="absolute top-0 left-0 h-full w-8 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 animate-slide-across"
+          className="absolute top-0 left-0 h-full w-6 md:w-8 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
           style={{
+            animation: `slide-across 2s ease-in-out infinite`,
             animationDelay: `${index * 200 + 1000}ms`,
-            animationDuration: '2s',
-            animationIterationCount: 'infinite',
           }}
         ></div>
       </div>

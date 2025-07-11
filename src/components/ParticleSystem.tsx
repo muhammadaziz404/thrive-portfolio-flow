@@ -19,6 +19,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,22 +39,27 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
     const createParticle = (x: number, y: number): Particle => ({
       x,
       y,
-      vx: (Math.random() - 0.5) * 2,
-      vy: (Math.random() - 0.5) * 2,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: (Math.random() - 0.5) * 1.5,
       life: 0,
-      maxLife: 60 + Math.random() * 40,
-      size: Math.random() * 3 + 1,
+      maxLife: 40 + Math.random() * 30, // Shorter life for better performance
+      size: Math.random() * 2 + 1,
     });
 
     const updateParticles = () => {
-      // Add new particles near mouse
-      if (Math.random() < 0.3) {
+      // Only add particles if mouse moved significantly
+      const dx = mousePosition.x - lastMousePos.current.x;
+      const dy = mousePosition.y - lastMousePos.current.y;
+      const mouseMoved = Math.sqrt(dx * dx + dy * dy) > 5;
+
+      if (mouseMoved && Math.random() < 0.2) { // Reduced particle spawn rate
         particlesRef.current.push(
           createParticle(
-            mousePosition.x + (Math.random() - 0.5) * 50,
-            mousePosition.y + (Math.random() - 0.5) * 50
+            mousePosition.x + (Math.random() - 0.5) * 30,
+            mousePosition.y + (Math.random() - 0.5) * 30
           )
         );
+        lastMousePos.current = { x: mousePosition.x, y: mousePosition.y };
       }
 
       // Update existing particles
@@ -61,15 +67,15 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
         particle.x += particle.vx;
         particle.y += particle.vy;
         particle.life++;
-        particle.vy += 0.05; // gravity
-        particle.vx *= 0.99; // friction
+        particle.vy += 0.03; // Reduced gravity
+        particle.vx *= 0.98; // Reduced friction
 
         return particle.life < particle.maxLife;
       });
 
-      // Limit particle count
-      if (particlesRef.current.length > 100) {
-        particlesRef.current = particlesRef.current.slice(-100);
+      // Limit particle count for performance
+      if (particlesRef.current.length > 60) {
+        particlesRef.current = particlesRef.current.slice(-60);
       }
     };
 
@@ -78,18 +84,18 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
 
       particlesRef.current.forEach((particle) => {
         const alpha = Math.max(0, 1 - particle.life / particle.maxLife);
-        const hue = 280 + Math.sin(particle.life * 0.1) * 60;
+        const hue = 280 + Math.sin(particle.life * 0.1) * 40;
         
         ctx.save();
-        ctx.globalAlpha = alpha;
+        ctx.globalAlpha = alpha * 0.8; // Reduced opacity for subtlety
         ctx.fillStyle = `hsla(${hue}, 70%, 60%, ${alpha})`;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add glow effect
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = `hsla(${hue}, 70%, 60%, ${alpha})`;
+        // Reduced glow effect for performance
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = `hsla(${hue}, 70%, 60%, ${alpha * 0.5})`;
         ctx.fill();
         
         ctx.restore();
@@ -115,7 +121,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({ mousePosition })
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-10"
+      className="fixed inset-0 pointer-events-none z-10 hidden md:block"
       style={{ mixBlendMode: 'screen' }}
     />
   );
